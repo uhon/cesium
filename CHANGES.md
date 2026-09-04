@@ -9,6 +9,7 @@
 - Fixed a GPU memory leak where the edge vertex array created for `EXT_mesh_primitive_edge_visibility` rendering was never destroyed when draw commands were rebuilt or the model was destroyed. [#13721](https://github.com/CesiumGS/cesium/pull/13721)
 - Changed the typing of `PrimitiveCollection.add` to return the added primitive as the same type instead of `any`. [#13742](https://github.com/CesiumGS/cesium/issues/13742)
 - Fixed camera flights re-enabling `enableInputs` even when it was `false` before the flight started. `Camera.flyTo` and `Camera.flyToBoundingSphere` now restore the previous value instead of unconditionally setting `true`. [#PR_NUMBER](https://github.com/CesiumGS/cesium/pull/PR_NUMBER)
+- Fixed camera flights not suspending controllers registered with `Scene.controllerHost`, letting user input hijack a flight. `Camera.flyTo` suspends `Scene.controllerHost` now as well like it does with `enableInputs` [#PR_NUMBER](https://github.com/CesiumGS/cesium/pull/PR_NUMBER)
 
 ## 1.145 - 2026-09-02
 

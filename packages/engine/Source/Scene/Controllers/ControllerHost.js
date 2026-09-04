@@ -16,6 +16,7 @@ class ControllerHost {
      */
     this._controllers = [];
     this._needsUpdate = new Set();
+    this._enabled = true;
   }
 
   /**
@@ -25,6 +26,32 @@ class ControllerHost {
    */
   get controllerCount() {
     return this._controllers.length;
+  }
+
+  /**
+   * Determines if the registered controllers are updated each frame. When <code>false</code>, no registered controller is updated, regardless of its own {@link Controller#enabled} value. This is used to suspend user input for the duration of a camera flight, and is the {@link ControllerHost} equivalent of {@link ScreenSpaceCameraController#enableInputs}.
+   * <p>
+   * Input received while the host is disabled is discarded rather than replayed: when the host is re-enabled, every registered controller is sent {@link Controller#firstUpdate} again before its next {@link Controller#update}, so that any input accumulated while suspended does not produce a sudden camera jump.
+   * </p>
+   * @type {boolean}
+   * @default true
+   */
+  get enabled() {
+    return this._enabled;
+  }
+
+  set enabled(value) {
+    if (this._enabled === value) {
+      return;
+    }
+
+    this._enabled = value;
+
+    if (value) {
+      for (const controller of this._controllers) {
+        this._needsUpdate.add(controller);
+      }
+    }
   }
 
   /**
@@ -55,11 +82,15 @@ class ControllerHost {
   }
 
   /**
-   * Invoked once per frame by the host scene. Updates all registered controllers in order of their priority.
+   * Invoked once per frame by the host scene. Updates all registered controllers in order of their priority. Does nothing when {@link ControllerHost#enabled} is <code>false</code>.
    * @param {Scene} scene The host scene.
    * @param {JulianDate} time The current simulation time.
    */
   update(scene, time) {
+    if (!this._enabled) {
+      return;
+    }
+
     for (const controller of this._controllers) {
       if (!controller.enabled) {
         continue;

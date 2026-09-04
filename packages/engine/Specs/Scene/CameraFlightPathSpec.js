@@ -544,6 +544,68 @@ describe(
       expect(controller.enableInputs).toEqual(false);
     });
 
+    it("suspends the controller host for the duration of the flight", function () {
+      const host = scene.controllerHost;
+      expect(host.enabled).toEqual(true);
+
+      const flight = CameraFlightPath.createTween(scene, {
+        destination: new Cartesian3(1e9, 1e9, 1e9),
+        duration: 5.0,
+      });
+
+      expect(host.enabled).toEqual(false);
+
+      flight.complete();
+      expect(host.enabled).toEqual(true);
+    });
+
+    it("restores the controller host when the flight is cancelled", function () {
+      const host = scene.controllerHost;
+
+      const flight = CameraFlightPath.createTween(scene, {
+        destination: new Cartesian3(1e9, 1e9, 1e9),
+        duration: 5.0,
+      });
+
+      expect(host.enabled).toEqual(false);
+
+      flight.cancel();
+      expect(host.enabled).toEqual(true);
+    });
+
+    it("restores the controller host to its previous value when it was disabled beforehand", function () {
+      const host = scene.controllerHost;
+      host.enabled = false;
+
+      const flight = CameraFlightPath.createTween(scene, {
+        destination: new Cartesian3(1e9, 1e9, 1e9),
+        duration: 5.0,
+      });
+
+      expect(host.enabled).toEqual(false);
+
+      flight.complete();
+      expect(host.enabled).toEqual(false);
+    });
+
+    it("does not enable the controller host when the camera is already at the destination", function () {
+      const camera = scene.camera;
+      const host = scene.controllerHost;
+      host.enabled = false;
+
+      const flight = CameraFlightPath.createTween(scene, {
+        destination: Cartesian3.clone(camera.position),
+        heading: camera.heading,
+        pitch: camera.pitch,
+        roll: camera.roll,
+      });
+
+      expect(flight.duration).toEqual(0.0);
+
+      flight.complete();
+      expect(host.enabled).toEqual(false);
+    });
+
     it("creates an animation in 3d 0 duration", function () {
       const camera = scene.camera;
 

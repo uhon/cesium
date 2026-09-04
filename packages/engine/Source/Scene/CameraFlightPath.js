@@ -392,13 +392,23 @@ function emptyFlight(complete, cancel) {
   };
 }
 
-function wrapCallback(controller, cb, enableInputs) {
+function wrapCallback(
+  controller,
+  cb,
+  enableInputs,
+  controllerHost,
+  hostEnabled,
+) {
   function wrapped() {
     if (typeof cb === "function") {
       cb();
     }
 
     controller.enableInputs = enableInputs;
+
+    if (defined(controllerHost)) {
+      controllerHost.enabled = hostEnabled;
+    }
   }
   return wrapped;
 }
@@ -462,8 +472,30 @@ CameraFlightPath.createTween = function (scene, options) {
   const wasInputEnabled = controller.enableInputs;
   controller.enableInputs = false;
 
-  const complete = wrapCallback(controller, options.complete, wasInputEnabled);
-  const cancel = wrapCallback(controller, options.cancel, wasInputEnabled);
+  // Controllers registered with the scene's ControllerHost are suspended for
+  // the duration of the flight as well, so that a flight cannot be hijacked by
+  // user input regardless of which input system the application uses.
+  const controllerHost = scene.controllerHost;
+  let wasHostEnabled;
+  if (defined(controllerHost)) {
+    wasHostEnabled = controllerHost.enabled;
+    controllerHost.enabled = false;
+  }
+
+  const complete = wrapCallback(
+    controller,
+    options.complete,
+    wasInputEnabled,
+    controllerHost,
+    wasHostEnabled,
+  );
+  const cancel = wrapCallback(
+    controller,
+    options.cancel,
+    wasInputEnabled,
+    controllerHost,
+    wasHostEnabled,
+  );
 
   const frustum = camera.frustum;
 
